@@ -1,0 +1,52 @@
+# Example configuration template for Spring Boot backend
+# Copy this file to application.properties and update values as needed.
+
+spring.application.name=ecom-proj
+server.port=${SERVER_PORT:8081}
+
+# Set to false to allow app startup even if Kafka is not running
+spring.kafka.listener.auto-startup=${KAFKA_ENABLED:true}
+
+# =============================================
+# MySQL Configuration
+# =============================================
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ecom_proj?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME:root}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:your_password}
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+
+# =============================================
+# JPA / Hibernate
+# =============================================
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.defer-datasource-initialization=true
+
+# =============================================
+# Razorpay Payment Gateway
+# =============================================
+razorpay.api.key=${RAZORPAY_API_KEY:your_razorpay_key}
+razorpay.api.secret=${RAZORPAY_API_SECRET:your_razorpay_secret}
+
+# =============================================
+# Kafka Configuration (KRaft mode - no Zookeeper)
+# =============================================
+spring.kafka.bootstrap-servers=${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+spring.kafka.consumer.group-id=ecom-group
+spring.kafka.consumer.auto-offset-reset=earliest
+spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer=org.springframework.kafka.support.serializer.JsonDeserializer
+spring.kafka.consumer.properties.spring.json.trusted.packages=*
+
+# =============================================
+# Email / SMTP Configuration
+# =============================================
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=${SPRING_MAIL_USERNAME:your_email@gmail.com}
+spring.mail.password=${SPRING_MAIL_PASSWORD:your_app_password}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
