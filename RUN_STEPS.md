@@ -305,14 +305,39 @@ If Prometheus & Grafana are running (`docker compose -f docker-compose.monitorin
 
 ---
 
+### Step 7: Run Automated Load & Benchmark Testing
+
+You can measure order processing times under load using the provided benchmark tools:
+
+1. **Automated Node.js Benchmark**:
+   ```powershell
+   node benchmark.js
+   ```
+   *Runs 10 automated order checkout cycles with JWT authentication and prints average, min, max response latencies.*
+
+2. **Grafana `k6` Concurrent Load Test**:
+   ```powershell
+   # Refresh PATH in active PowerShell window if k6 was recently installed:
+   $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+
+   k6 run k6-script.js
+   ```
+   *Simulates 10 concurrent Virtual Users placing orders and calculates `http_req_duration` (P90, P95).*
+
+---
+
 ## Quick Reference: Switching Between Modes
 
 | Action | Command |
 |--------|---------|
-| **Run WITHOUT Kafka** | `mvn clean spring-boot:run` (default `KAFKA_ENABLED=false`) |
-| **Run WITH Kafka** | `$env:KAFKA_ENABLED="true"; mvn clean spring-boot:run` |
-| **Start Kafka via Docker** | `docker run -d --name kafka-broker -p 9092:9092 apache/kafka:latest` |
-| **Stop Kafka Docker** | `docker stop kafka-broker` |
+| **Run WITHOUT Kafka** | `docker stop kafka-broker; $env:KAFKA_ENABLED="false"; cd backend; mvn clean spring-boot:run` |
+| **Run WITH Kafka** | `docker start kafka-broker; $env:KAFKA_ENABLED="true"; cd backend; mvn clean spring-boot:run` |
+| **Reset Env Variable (PowerShell)** | `$env:KAFKA_ENABLED="false"` or `Remove-Item Env:\KAFKA_ENABLED` |
+| **Check Port 9092** | `Test-NetConnection -ComputerName localhost -Port 9092` |
+| **Start Kafka Container** | `docker start kafka-broker` |
+| **Stop Kafka Container** | `docker stop kafka-broker` |
+| **Run Node.js Benchmark** | `node benchmark.js` |
+| **Run Grafana k6 Load Test** | `k6 run k6-script.js` |
 | **Run Backend Tests** | `cd backend && mvn clean test` |
 | **Run Frontend E2E Tests** | `cd frontend && npx playwright test` |
 | **Start Monitoring Stack** | `docker compose -f docker-compose.monitoring.yml up -d` |

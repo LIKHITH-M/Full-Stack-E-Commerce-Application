@@ -29,11 +29,13 @@ This application solves key e-commerce challenges:
 * **Event-Driven Micro-Architecture (Kafka KRaft):** Event producer (`OrderEventProducer`) publishing `OrderPlacedEvent` messages consumed independently by:
   * `EmailNotificationConsumer` (Sends order confirmation emails via SMTP).
   * `InventoryUpdateConsumer` (Reduces product stock quantities in real time).
+* **Performance & Load Testing Suite:** Includes automated Node.js benchmark (`benchmark.js`) and Grafana `k6` virtual user load test (`k6-script.js`) for measuring HTTP latency reduction (~8.4s down to ~15-40ms) and throughput scaling.
 * **Comprehensive Admin Control Panel (`/admin`):**
   * **Category CRUD:** Add, rename, and remove categories.
   * **Product CRUD:** Add/edit products with multipart binary image upload (`LONGBLOB`).
   * **User Management:** View all user accounts and remove non-admin users.
   * **Order Tracking:** Real-time table of all customer orders with auto-refresh every 5 seconds.
+
 
 ### Complete Workflow from User Perspective
 
