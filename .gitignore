@@ -125,3 +125,12 @@ Thumbs.db
 # Application Configuration / Secrets
 backend/src/main/resources/application.properties
 
+# Playwright Test Outputs
+playwright-report/
+test-results/
+blob-report/
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+
+
