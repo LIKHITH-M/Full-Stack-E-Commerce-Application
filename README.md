@@ -1,14 +1,16 @@
 # 🛒 Full Stack E-Commerce Application
 
+![Build Status](https://github.com/LIKHITH-M/Full-Stack-E-Commerce-Application/actions/workflows/ci.yml/badge.svg)
 ![Stack](https://img.shields.io/badge/Stack-Spring_Boot_+_React-blueviolet?style=flat-square)
 ![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-6DB33F?style=flat-square&logo=springboot&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-8+-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![JUnit 5](https://img.shields.io/badge/Testing-JUnit_5_+_Mockito-25A162?style=flat-square&logo=junit5&logoColor=white)
+![Playwright](https://img.shields.io/badge/E2E-Playwright-2EAD33?style=flat-square&logo=playwright&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Observability-Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Monitoring-Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)
 ![Kafka](https://img.shields.io/badge/Kafka-KRaft-231F20?style=flat-square&logo=apachekafka&logoColor=white)
 ![Razorpay](https://img.shields.io/badge/Payments-Razorpay-002970?style=flat-square&logo=razorpay&logoColor=white)
-![JWT](https://img.shields.io/badge/Auth-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 **A production-ready, full-stack e-commerce platform** built with **Spring Boot 3 (Java 21)** on the backend and **React 18 (Vite)** on the frontend. It features JWT-based stateless authentication, **Razorpay** payment gateway integration, and an **event-driven architecture** powered by **Apache Kafka (KRaft mode)** for real-time order notifications and automated inventory management.
