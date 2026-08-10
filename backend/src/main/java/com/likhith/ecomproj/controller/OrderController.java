@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.likhith.ecomproj.model.OrderEntity;
 import com.likhith.ecomproj.model.OrderPlacedEvent;
+import com.likhith.ecomproj.repo.CartItemRepo;
 import com.likhith.ecomproj.repo.OrderRepo;
 import com.likhith.ecomproj.service.OrderEventProducer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ public class OrderController {
 
     @Autowired
     private OrderRepo orderRepo;
+
+    @Autowired
+    private CartItemRepo cartItemRepo;
 
     @Autowired
     private com.likhith.ecomproj.repo.UserRepo userRepo;
@@ -72,6 +76,10 @@ public class OrderController {
 
             orderRepo.save(order);
             System.out.println("✅ Order saved to DB: " + order.getOrderId());
+
+            // Clear the user's cart from DB after successful order
+            cartItemRepo.deleteByUsername(username);
+            System.out.println("✅ Cart cleared from DB for user: " + username);
 
             // Publish Kafka event (async: email + inventory update)
             orderEventProducer.publishOrderPlacedEvent(event);

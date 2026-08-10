@@ -50,7 +50,6 @@ const AdminRoute = ({ children }) => {
 };
 
 function App() {
-  const [cart, setCart] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
 
   const isLoggedIn = !!localStorage.getItem("token");
@@ -59,21 +58,6 @@ function App() {
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
-  };
-
-  const addToCart = (product) => {
-    const existingProduct = cart.find((item) => item.id === product.id);
-    if (existingProduct) {
-      setCart(
-        cart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      );
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
-    }
   };
 
   return (
@@ -91,7 +75,7 @@ function App() {
             path="/"
             element={
               <UserRoute>
-                <Home addToCart={addToCart} selectedCategory={selectedCategory} />
+                <Home selectedCategory={selectedCategory} />
               </UserRoute>
             }
           />
