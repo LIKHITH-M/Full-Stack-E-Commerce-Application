@@ -97,40 +97,35 @@
 | **Java 21** | Core language with modern features (records, pattern matching, virtual threads) |
 | **Spring Boot 3.3** | Application framework with auto-configuration and embedded Tomcat |
 | **Spring Security** | Authentication & authorization with JWT-based stateless sessions |
-| **Spring Data JPA** | ORM layer with Hibernate for database operations |
+| **Spring Data JPA** | ORM layer with Hibernate for database operations (`users`, `product`, `categories`, `orders`, `cart_items`) |
 | **Spring Kafka** | Kafka producer/consumer integration for event-driven messaging |
-| **Spring Mail** | SMTP-based email notifications (Gmail) |
+| **Resend HTTP API** | HTTPS-based transactional email delivery (bypasses Render outbound SMTP port blocking) |
 | **JJWT (0.12.6)** | JWT token generation, signing, and validation |
 | **Razorpay Java SDK** | Server-side payment order creation and verification |
 | **Lombok** | Boilerplate reduction — `@Data`, `@NoArgsConstructor`, `@AllArgsConstructor` |
-| **MySQL Connector/J** | JDBC driver for MySQL database connectivity |
-| **PostgreSQL Driver** | JDBC driver for PostgreSQL (switchable alternative) |
+| **PostgreSQL Driver** | JDBC driver for Neon Cloud PostgreSQL database connectivity |
 | **Maven** | Build tool and dependency management |
 
 ### Frontend
 
 | Technology | Purpose |
 |:---|:---|
-| **React 18** | Component-based UI library with hooks and context API |
+| **React 18** | Component-based UI library with hooks and Context API |
 | **Vite 5** | Lightning-fast dev server with HMR and optimized builds |
 | **React Router DOM 6** | Client-side routing with protected route guards |
 | **Axios** | HTTP client with JWT interceptor for automatic token injection |
 | **Bootstrap 5** | Responsive UI framework with grid system and components |
 | **React Bootstrap** | Bootstrap components as React elements |
 | **Bootstrap Icons** | Icon library for UI elements |
-| **React Icons** | Additional icon sets for enhanced visual design |
-| **Sass** | CSS preprocessor for custom styling |
-| **SWC** | Rust-based compiler for fast JSX/TSX transpilation |
 
 ### Infrastructure & Services
 
 | Technology | Purpose |
 |:---|:---|
-| **Apache Kafka (KRaft)** | Event streaming platform — no ZooKeeper dependency |
-| **MySQL 8+** | Primary relational database (auto-creates schema) |
-| **PostgreSQL** | Alternative database (switchable via config) |
+| **Apache Kafka (KRaft)** | Event streaming platform — Aiven Cloud Kafka (SASL_SSL) with custom JVM truststore |
+| **Neon PostgreSQL** | Cloud PostgreSQL primary relational database |
 | **Razorpay** | Payment gateway for Indian Rupee transactions |
-| **Gmail SMTP** | Transactional email delivery for order confirmations |
+| **Resend Email API** | Transactional email delivery over HTTPS (Port 443) |
 
 ---
 

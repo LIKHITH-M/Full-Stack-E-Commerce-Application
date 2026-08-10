@@ -24,10 +24,10 @@ This application solves key e-commerce challenges:
 * **JWT Stateless Authentication & Authorization:** Secure registration and dual-tab login (User vs. Admin) powered by BCrypt password hashing and JWT authorization tokens.
 * **Product Catalog & Category Browsing:** Interactive grid displaying product cards with image previews, category filtering, price displays, and stock badges.
 * **Live Keyword Search:** Instant, real-time product search matching product titles and descriptions.
-* **Persistent Cart & Dynamic Calculation:** Client-side cart backed by React Context and `localStorage`, with live price calculations and quantity limit checks against available stock.
+* **Database-Backed Persistent Cart:** User cart is stored directly in PostgreSQL database (`cart_items` table) via `CartItem` JPA entity and `/api/cart` REST endpoints. Replaces fragile client-side localStorage, ensuring items persist reliably across sessions and are automatically deleted upon successful checkout.
 * **Dual Checkout Engine:** Integrated **Razorpay** payment gateway for payment collection and **Manual Checkout** mode for immediate order registration.
 * **Event-Driven Micro-Architecture (Kafka KRaft):** Event producer (`OrderEventProducer`) publishing `OrderPlacedEvent` messages consumed independently by:
-  * `EmailNotificationConsumer` (Sends order confirmation emails via SMTP).
+  * `EmailNotificationConsumer` (Sends order confirmation emails via Resend HTTP API over Port 443 HTTPS).
   * `InventoryUpdateConsumer` (Reduces product stock quantities in real time).
 * **Performance & Load Testing Suite:** Includes automated Node.js benchmark (`benchmark.js`) and Grafana `k6` virtual user load test (`k6-script.js`) for measuring HTTP latency reduction (~8.4s down to ~15-40ms) and throughput scaling.
 * **Comprehensive Admin Control Panel (`/admin`):**
