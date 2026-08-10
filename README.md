@@ -1,21 +1,31 @@
 # 🛒 Full Stack E-Commerce Application
 
 ![Build Status](https://github.com/LIKHITH-M/Full-Stack-E-Commerce-Application/actions/workflows/ci.yml/badge.svg)
-![Stack](https://img.shields.io/badge/Stack-Spring_Boot_+_React-blueviolet?style=flat-square)
+![Frontend](https://img.shields.io/badge/Frontend-Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
+![Backend](https://img.shields.io/badge/Backend-Render-46E3B7?style=flat-square&logo=render&logoColor=white)
+![Database](https://img.shields.io/badge/Database-Neon_PostgreSQL-00E599?style=flat-square&logo=postgresql&logoColor=white)
+![Kafka](https://img.shields.io/badge/Kafka-Aiven_Free_Tier-FF4F00?style=flat-square&logo=apachekafka&logoColor=white)
+![Observability](https://img.shields.io/badge/Observability-Grafana_Cloud-F46800?style=flat-square&logo=grafana&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-6DB33F?style=flat-square&logo=springboot&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)
-![JUnit 5](https://img.shields.io/badge/Testing-JUnit_5_+_Mockito-25A162?style=flat-square&logo=junit5&logoColor=white)
-![Playwright](https://img.shields.io/badge/E2E-Playwright-2EAD33?style=flat-square&logo=playwright&logoColor=white)
-![Prometheus](https://img.shields.io/badge/Observability-Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white)
-![Grafana](https://img.shields.io/badge/Monitoring-Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)
-![Kafka](https://img.shields.io/badge/Kafka-KRaft-231F20?style=flat-square&logo=apachekafka&logoColor=white)
-![Razorpay](https://img.shields.io/badge/Payments-Razorpay-002970?style=flat-square&logo=razorpay&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-**A production-ready, full-stack e-commerce platform** built with **Spring Boot 3 (Java 21)** on the backend and **React 18 (Vite)** on the frontend. It features JWT-based stateless authentication, **Razorpay** payment gateway integration, and an **event-driven architecture** powered by **Apache Kafka (KRaft mode)** for real-time order notifications and automated inventory management.
+**A production-ready, cloud-deployed full-stack e-commerce platform** built with **Spring Boot 3 (Java 21)** on the backend and **React 18 (Vite)** on the frontend. It features JWT-based stateless authentication, **Razorpay** payment gateway integration, and an **event-driven architecture** powered by **Apache Kafka (Aiven Cloud)** for real-time order notifications and automated inventory management.
 
-The application provides a complete shopping experience for users — browsing, searching, cart management, and secure checkout — alongside a powerful admin dashboard for managing products, categories, users, and orders.
+---
+
+## 🌐 Production Deployment URLs
+
+| Service | Infrastructure | Live URL / Endpoint | Status |
+|:---|:---|:---|:---:|
+| **Frontend Web App** | **Vercel** (Edge CDN) | [https://full-stack-e-commerce-application-orm5djw09-parzival2.vercel.app](https://full-stack-e-commerce-application-orm5djw09-parzival2.vercel.app) | 🟢 Live |
+| **Backend REST API** | **Render** (Docker / Java 21) | `https://ecom-backend-nk37.onrender.com` | 🟢 Live |
+| **Actuator Health** | **Spring Boot Actuator** | `https://ecom-backend-nk37.onrender.com/actuator/health` | 🟢 Live |
+| **Prometheus Metrics** | **Micrometer / Grafana** | `https://ecom-backend-nk37.onrender.com/actuator/prometheus` | 🟢 Live |
+| **Database** | **Neon PostgreSQL** | `ep-floral-bonus-axg58q7m.c-4.us-east-2.aws.neon.tech` | 🟢 Connected |
+| **Kafka Broker** | **Aiven Kafka** (SASL_SSL) | `ecom-kafka-xxxx.aivencloud.com:28045` | 🟢 Connected |
+| **Deployment Guide** | **Markdown Doc** | [DEPLOYMENT_GUIDE.md](file:///c:/Desktop/Projects/Full%20Stack%20E-commerce%20Application/DEPLOYMENT_GUIDE.md) | 📖 Documented |
 
 ---
 
