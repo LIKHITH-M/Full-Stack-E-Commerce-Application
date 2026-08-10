@@ -208,11 +208,13 @@ const Cart = () => {
         items: orderItems,
       });
 
-      setShowModal(false);
-      alert("Order placed successfully!");
+      // Clear cart and close modal BEFORE the blocking alert()
+      // so localStorage is immediately cleaned up
       clearCart();
       setCartItems([]);
+      setShowModal(false);
       refreshData();
+      alert("Order placed successfully!");
     } catch (error) {
       console.error("Error during manual checkout:", error);
       alert("Checkout failed. Please try again.");

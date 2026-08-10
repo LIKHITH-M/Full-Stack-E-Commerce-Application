@@ -52,8 +52,9 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const clearCart =() =>{
+  const clearCart = () => {
     setCart([]);
+    localStorage.removeItem('cart');
   }
   
   useEffect(() => {
