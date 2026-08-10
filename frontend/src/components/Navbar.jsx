@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../axios";
 
 const Navbar = ({ onSelectCategory }) => {
   const getInitialTheme = () => {
@@ -14,20 +14,13 @@ const Navbar = ({ onSelectCategory }) => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:8081/api/products", {
-        headers: getAuthHeaders(),
-      });
+      const response = await API.get("/products");
       setSearchResults(response.data);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -39,9 +32,8 @@ const Navbar = ({ onSelectCategory }) => {
     if (value.length >= 1) {
       setShowSearchResults(true);
       try {
-        const response = await axios.get(
-          `http://localhost:8081/api/products/search?keyword=${value}`,
-          { headers: getAuthHeaders() }
+        const response = await API.get(
+          `/products/search?keyword=${value}`
         );
         setSearchResults(response.data);
         setNoResults(response.data.length === 0);
@@ -82,9 +74,7 @@ const Navbar = ({ onSelectCategory }) => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("http://localhost:8081/api/categories", {
-          headers: getAuthHeaders(),
-        });
+        const response = await API.get("/categories");
         setCategories(response.data);
       } catch (error) {
         console.error("Error fetching categories:", error);

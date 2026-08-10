@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import API from "../axios";
 import AppContext from "../Context/Context";
 import unplugged from "../assets/unplugged.png"
 
@@ -22,9 +22,9 @@ const Home = ({ selectedCategory }) => {
         const updatedProducts = await Promise.all(
           data.map(async (product) => {
             try {
-              const response = await axios.get(
-                `http://localhost:8081/api/product/${product.id}/image`,
-                { responseType: "blob", headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+              const response = await API.get(
+                `/product/${product.id}/image`,
+                { responseType: "blob" }
               );
               const imageUrl = URL.createObjectURL(response.data);
               return { ...product, imageUrl };

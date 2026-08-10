@@ -17,18 +17,16 @@ const Cart = () => {
     const fetchImagesAndUpdateCart = async () => {
       console.log("Cart", cart);
       try {
-        const response = await axios.get("http://localhost:8081/api/products", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
+        const response = await API.get("/products");
         const backendProductIds = response.data.map((product) => product.id);
 
         const updatedCartItems = cart.filter((item) => backendProductIds.includes(item.id));
         const cartItemsWithImages = await Promise.all(
           updatedCartItems.map(async (item) => {
             try {
-              const response = await axios.get(
-                `http://localhost:8081/api/product/${item.id}/image`,
-                { responseType: "blob", headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+              const response = await API.get(
+                `/product/${item.id}/image`,
+                { responseType: "blob" }
               );
               const imageFile = await converUrlToFile(response.data, response.data.imageName);
               setCartImage(imageFile)

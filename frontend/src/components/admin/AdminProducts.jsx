@@ -35,6 +35,7 @@ const AdminProducts = () => {
     };
 
     const fallbackImage = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='50' fill='%236c757d' viewBox='0 0 16 16'><rect width='100%' height='100%' fill='%23e9ecef'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-size='7'>No Image</text></svg>";
+    const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8081/api";
 
     return (
         <div className="container mt-4">
@@ -71,7 +72,7 @@ const AdminProducts = () => {
                             <td>{product.id}</td>
                             <td>
                                 <img
-                                    src={`http://localhost:8081/api/product/${product.id}/image`}
+                                    src={`${API_BASE}/product/${product.id}/image`}
                                     alt={product.name}
                                     style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "5px" }}
                                     onError={(e) => {

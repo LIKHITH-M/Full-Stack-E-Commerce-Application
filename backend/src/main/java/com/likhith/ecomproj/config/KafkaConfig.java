@@ -22,10 +22,32 @@ public class KafkaConfig {
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
     private String bootstrapServers;
 
+    @Value("${spring.kafka.properties.security.protocol:}")
+    private String securityProtocol;
+
+    @Value("${spring.kafka.properties.sasl.mechanism:}")
+    private String saslMechanism;
+
+    @Value("${spring.kafka.properties.sasl.jaas.config:}")
+    private String saslJaasConfig;
+
+    private void applySecurityConfigs(Map<String, Object> configs) {
+        if (securityProtocol != null && !securityProtocol.isBlank()) {
+            configs.put("security.protocol", securityProtocol);
+        }
+        if (saslMechanism != null && !saslMechanism.isBlank()) {
+            configs.put("sasl.mechanism", saslMechanism);
+        }
+        if (saslJaasConfig != null && !saslJaasConfig.isBlank()) {
+            configs.put("sasl.jaas.config", saslJaasConfig);
+        }
+    }
+
     @Bean
     public KafkaAdmin kafkaAdmin() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        applySecurityConfigs(configs);
         KafkaAdmin admin = new KafkaAdmin(configs);
         admin.setFatalIfBrokerNotAvailable(false); // Don't crash if Kafka is not running
         return admin;
@@ -38,6 +60,7 @@ public class KafkaConfig {
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         config.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 3000); // Fail fast if Kafka is not available
+        applySecurityConfigs(config);
         return new DefaultKafkaProducerFactory<>(config);
     }
 
