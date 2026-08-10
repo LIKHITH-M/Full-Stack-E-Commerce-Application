@@ -7,12 +7,10 @@ import com.likhith.ecomproj.model.OrderPlacedEvent;
 import com.likhith.ecomproj.repo.CartItemRepo;
 import com.likhith.ecomproj.repo.OrderRepo;
 import com.likhith.ecomproj.service.OrderEventProducer;
+import com.likhith.ecomproj.service.ResendEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,10 +38,7 @@ public class OrderController {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private JavaMailSender mailSender;
-
-    @Value("${spring.mail.username:}")
-    private String senderEmail;
+    private ResendEmailService resendEmailService;
 
     /**
      * Called by frontend after successful Razorpay payment.
@@ -81,48 +76,44 @@ public class OrderController {
             cartItemRepo.deleteByUsername(username);
             System.out.println("✅ Cart cleared from DB for user: " + username);
 
-            // Publish Kafka event (async: email + inventory update)
+            // Publish Kafka event (async: inventory update)
             orderEventProducer.publishOrderPlacedEvent(event);
 
-            // ========== ASYNC EMAIL (non-blocking background thread) ==========
-            // Send email in a background thread so the HTTP response returns instantly.
-            // Previously this was synchronous and blocked 2+ minutes on SMTP timeout,
-            // causing the frontend to hang and never clear the cart.
+            // ========== ASYNC EMAIL via Resend HTTP API ==========
+            // Render free tier blocks SMTP ports 25/465/587.
+            // Resend uses HTTPS (port 443) which is not blocked.
             final String recipientEmail = event.getEmail();
             final String orderUsername = event.getUsername();
             final String orderId = event.getOrderId();
             final String paymentId = event.getPaymentId();
-            final java.math.BigDecimal totalAmount = event.getTotalAmount();
+            final BigDecimal totalAmount = event.getTotalAmount();
 
             new Thread(() -> {
                 try {
                     if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
-                        SimpleMailMessage message = new SimpleMailMessage();
-                        if (senderEmail != null && !senderEmail.trim().isEmpty()) {
-                            message.setFrom(senderEmail.trim());
-                        }
-                        message.setTo(recipientEmail.trim());
-                        message.setSubject("Order Confirmation - " + orderId);
+                        String subject = "Order Confirmation - " + orderId;
+                        String html = "<h2>Order Confirmation</h2>"
+                                + "<p>Dear " + orderUsername + ",</p>"
+                                + "<p>Thank you for your order!</p>"
+                                + "<table style='border-collapse:collapse;width:100%;max-width:400px'>"
+                                + "<tr><td style='padding:8px;border:1px solid #ddd'><strong>Order ID</strong></td>"
+                                + "<td style='padding:8px;border:1px solid #ddd'>" + orderId + "</td></tr>"
+                                + "<tr><td style='padding:8px;border:1px solid #ddd'><strong>Payment ID</strong></td>"
+                                + "<td style='padding:8px;border:1px solid #ddd'>" + paymentId + "</td></tr>"
+                                + "<tr><td style='padding:8px;border:1px solid #ddd'><strong>Total Amount</strong></td>"
+                                + "<td style='padding:8px;border:1px solid #ddd'>Rs." + totalAmount + "</td></tr>"
+                                + "</table>"
+                                + "<p>Thank you for shopping with us!</p>";
 
-                        StringBuilder body = new StringBuilder();
-                        body.append("Dear ").append(orderUsername).append(",\n\n");
-                        body.append("Thank you for your order!\n\n");
-                        body.append("Order ID: ").append(orderId).append("\n");
-                        body.append("Payment ID: ").append(paymentId).append("\n");
-                        body.append("Total Amount: Rs.").append(totalAmount).append("\n\n");
-                        body.append("Thank you for shopping with us!");
-                        message.setText(body.toString());
-
-                        mailSender.send(message);
-                        System.out.println("✅ Direct email sent to: " + recipientEmail);
+                        resendEmailService.sendEmail(recipientEmail.trim(), subject, html);
                     } else {
                         System.out.println("⚠️ No email address found for user: " + orderUsername);
                     }
                 } catch (Exception emailEx) {
-                    System.err.println("❌ Direct email FAILED: " + emailEx.getMessage());
+                    System.err.println("❌ Email FAILED: " + emailEx.getMessage());
                 }
             }, "email-sender-" + orderId).start();
-            // ==================================================================
+            // =====================================================
 
             return new ResponseEntity<>(order, HttpStatus.CREATED);
         } catch (JsonProcessingException e) {
@@ -147,4 +138,3 @@ public class OrderController {
         return new ResponseEntity<>(orderRepo.findAll(), HttpStatus.OK);
     }
 }
-
