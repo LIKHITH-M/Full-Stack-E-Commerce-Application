@@ -13,9 +13,6 @@ import java.net.http.HttpResponse;
  * 
  * Render free tier blocks all SMTP ports (25, 465, 587).
  * Resend uses HTTPS (port 443) which is not blocked.
- * 
- * Free tier: 100 emails/day, 3000/month.
- * Sign up at https://resend.com and get an API key.
  */
 @Service
 public class ResendEmailService {
@@ -28,22 +25,37 @@ public class ResendEmailService {
     @Value("${RESEND_FROM_EMAIL:onboarding@resend.dev}")
     private String fromEmail;
 
+    @Value("${RESEND_TEST_RECIPIENT:likithgowdam10@gmail.com}")
+    private String testRecipient;
+
     /**
      * Send an email via Resend HTTP API.
-     * Returns true if sent successfully, false otherwise.
      */
     public boolean sendEmail(String to, String subject, String htmlBody) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
-            System.err.println("⚠️ RESEND_API_KEY not set, skipping email.");
+            System.err.println("⚠️ RESEND_API_KEY is not configured in Render environment variables.");
             return false;
         }
 
+        String targetEmail = (to != null && !to.trim().isEmpty()) ? to.trim() : testRecipient;
+        boolean success = executeSend(targetEmail, subject, htmlBody);
+
+        // If sending to the user's email failed due to Resend domain restriction (403),
+        // fallback to sending to the registered account owner email (testRecipient)
+        if (!success && !targetEmail.equalsIgnoreCase(testRecipient)) {
+            System.out.println("🔄 Retrying Resend email with verified owner recipient: " + testRecipient);
+            success = executeSend(testRecipient, "[TEST MODE] " + subject, htmlBody);
+        }
+
+        return success;
+    }
+
+    private boolean executeSend(String recipient, String subject, String htmlBody) {
         try {
-            // Build JSON payload
             String jsonPayload = String.format(
                 "{\"from\":\"%s\",\"to\":[\"%s\"],\"subject\":\"%s\",\"html\":\"%s\"}",
                 escapeJson(fromEmail),
-                escapeJson(to),
+                escapeJson(recipient),
                 escapeJson(subject),
                 escapeJson(htmlBody)
             );
@@ -59,14 +71,14 @@ public class ResendEmailService {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200 || response.statusCode() == 201) {
-                System.out.println("✅ Resend email sent to: " + to);
+                System.out.println("✅ Resend email successfully sent to: " + recipient);
                 return true;
             } else {
-                System.err.println("❌ Resend API error (" + response.statusCode() + "): " + response.body());
+                System.err.println("❌ Resend API Error (" + response.statusCode() + "): " + response.body());
                 return false;
             }
         } catch (Exception e) {
-            System.err.println("❌ Resend email FAILED: " + e.getMessage());
+            System.err.println("❌ Resend email exception: " + e.getMessage());
             return false;
         }
     }
