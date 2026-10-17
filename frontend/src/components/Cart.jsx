@@ -47,6 +47,8 @@ const Cart = () => {
 
     if (cart.length) {
       fetchImagesAndUpdateCart();
+    } else {
+      setCartItems([]);
     }
   }, [cart]);
 
