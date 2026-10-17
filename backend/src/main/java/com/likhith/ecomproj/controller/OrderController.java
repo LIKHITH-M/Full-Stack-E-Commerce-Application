@@ -76,36 +76,45 @@ public class OrderController {
             // Publish Kafka event (async: email + inventory update)
             orderEventProducer.publishOrderPlacedEvent(event);
 
-            // ========== DIRECT EMAIL (bypass Kafka) ==========
-            try {
-                String recipientEmail = event.getEmail();
-                if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
-                    SimpleMailMessage message = new SimpleMailMessage();
-                    if (senderEmail != null && !senderEmail.trim().isEmpty()) {
-                        message.setFrom(senderEmail.trim());
+            // ========== ASYNC EMAIL (non-blocking background thread) ==========
+            // Send email in a background thread so the HTTP response returns instantly.
+            // Previously this was synchronous and blocked 2+ minutes on SMTP timeout,
+            // causing the frontend to hang and never clear the cart.
+            final String recipientEmail = event.getEmail();
+            final String orderUsername = event.getUsername();
+            final String orderId = event.getOrderId();
+            final String paymentId = event.getPaymentId();
+            final java.math.BigDecimal totalAmount = event.getTotalAmount();
+
+            new Thread(() -> {
+                try {
+                    if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
+                        SimpleMailMessage message = new SimpleMailMessage();
+                        if (senderEmail != null && !senderEmail.trim().isEmpty()) {
+                            message.setFrom(senderEmail.trim());
+                        }
+                        message.setTo(recipientEmail.trim());
+                        message.setSubject("Order Confirmation - " + orderId);
+
+                        StringBuilder body = new StringBuilder();
+                        body.append("Dear ").append(orderUsername).append(",\n\n");
+                        body.append("Thank you for your order!\n\n");
+                        body.append("Order ID: ").append(orderId).append("\n");
+                        body.append("Payment ID: ").append(paymentId).append("\n");
+                        body.append("Total Amount: Rs.").append(totalAmount).append("\n\n");
+                        body.append("Thank you for shopping with us!");
+                        message.setText(body.toString());
+
+                        mailSender.send(message);
+                        System.out.println("✅ Direct email sent to: " + recipientEmail);
+                    } else {
+                        System.out.println("⚠️ No email address found for user: " + orderUsername);
                     }
-                    message.setTo(recipientEmail.trim());
-                    message.setSubject("Order Confirmation - " + event.getOrderId());
-
-                    StringBuilder body = new StringBuilder();
-                    body.append("Dear ").append(event.getUsername()).append(",\n\n");
-                    body.append("Thank you for your order!\n\n");
-                    body.append("Order ID: ").append(event.getOrderId()).append("\n");
-                    body.append("Payment ID: ").append(event.getPaymentId()).append("\n");
-                    body.append("Total Amount: Rs.").append(event.getTotalAmount()).append("\n\n");
-                    body.append("Thank you for shopping with us!");
-                    message.setText(body.toString());
-
-                    mailSender.send(message);
-                    System.out.println("✅ Direct email sent to: " + recipientEmail);
-                } else {
-                    System.out.println("⚠️ No email address found for user: " + username);
+                } catch (Exception emailEx) {
+                    System.err.println("❌ Direct email FAILED: " + emailEx.getMessage());
                 }
-            } catch (Exception emailEx) {
-                System.err.println("❌ Direct email FAILED: " + emailEx.getMessage());
-                emailEx.printStackTrace();
-            }
-            // =================================================
+            }, "email-sender-" + orderId).start();
+            // ==================================================================
 
             return new ResponseEntity<>(order, HttpStatus.CREATED);
         } catch (JsonProcessingException e) {
@@ -130,3 +139,4 @@ public class OrderController {
         return new ResponseEntity<>(orderRepo.findAll(), HttpStatus.OK);
     }
 }
+
