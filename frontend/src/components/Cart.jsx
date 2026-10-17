@@ -129,6 +129,7 @@ const Cart = () => {
             await API.post("/orders/checkout", {
               paymentId: response.razorpay_payment_id,
               orderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
               email: localStorage.getItem("email") || "",
               totalAmount: totalPrice,
               items: orderItems,

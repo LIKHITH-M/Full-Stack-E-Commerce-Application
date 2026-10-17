@@ -55,17 +55,19 @@ const UpdateProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("images", image)
-    console.log("productsdfsfsf", updateProduct)
     const updatedProduct = new FormData();
-    updatedProduct.append("imageFile", image);
+    if (image) {
+      updatedProduct.append("imageFile", image);
+    }
+    const productPayload = {
+      ...updateProduct,
+      imageData: null
+    };
     updatedProduct.append(
       "product",
-      new Blob([JSON.stringify(updateProduct)], { type: "application/json" })
+      new Blob([JSON.stringify(productPayload)], { type: "application/json" })
     );
 
-
-    console.log("formData : ", updatedProduct)
     API
       .put(`/product/${id}`, updatedProduct, {
         headers: {
@@ -73,13 +75,12 @@ const UpdateProduct = () => {
         },
       })
       .then((response) => {
-        console.log("Product updated successfully:", updatedProduct);
         alert("Product updated successfully!");
       })
       .catch((error) => {
         console.error("Error updating product:", error);
-        console.log("product unsuccessfull update", updateProduct)
-        alert("Failed to update product. Please try again.");
+        const errorMsg = typeof error.response?.data === "string" ? error.response.data : (error.response?.data?.message || "Failed to update product. Please try again.");
+        alert(errorMsg);
       });
   };
 

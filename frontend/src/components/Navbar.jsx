@@ -22,7 +22,7 @@ const Navbar = ({ onSelectCategory }) => {
   const fetchData = async () => {
     try {
       const response = await API.get("/products");
-      setSearchResults(response.data);
+      setSearchResults(Array.isArray(response.data) ? response.data : (response.data.content || []));
     } catch (error) {
       console.error("Error fetching data:", error);
     }
