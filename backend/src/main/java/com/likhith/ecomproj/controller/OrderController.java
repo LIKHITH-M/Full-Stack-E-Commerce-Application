@@ -1,140 +1,57 @@
 package com.likhith.ecomproj.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.likhith.ecomproj.dto.CheckoutRequest;
+import com.likhith.ecomproj.dto.OrderResponseDTO;
 import com.likhith.ecomproj.model.OrderEntity;
-import com.likhith.ecomproj.model.OrderPlacedEvent;
-import com.likhith.ecomproj.repo.CartItemRepo;
-import com.likhith.ecomproj.repo.OrderRepo;
-import com.likhith.ecomproj.service.OrderEventProducer;
-import com.likhith.ecomproj.service.ResendEmailService;
+import com.likhith.ecomproj.service.OrderService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 
+/**
+ * Thin controller — all business logic delegated to OrderService.
+ * Returns clean OrderResponseDTOs to avoid exposing database entity internals.
+ */
 @RestController
 @RequestMapping("/api/orders")
+@Slf4j
 public class OrderController {
 
     @Autowired
-    private OrderRepo orderRepo;
-
-    @Autowired
-    private CartItemRepo cartItemRepo;
-
-    @Autowired
-    private com.likhith.ecomproj.repo.UserRepo userRepo;
-
-    @Autowired
-    private OrderEventProducer orderEventProducer;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private ResendEmailService resendEmailService;
+    private OrderService orderService;
 
     /**
-     * Called by frontend after successful Razorpay payment.
-     * Saves the order and publishes a Kafka event for email + inventory.
+     * Checkout endpoint — called by frontend after successful payment.
+     * Accepts CheckoutRequest (no client-supplied prices) and delegates to OrderService.
      */
     @PostMapping("/checkout")
-    public ResponseEntity<?> checkout(@RequestBody OrderPlacedEvent event) {
-        try {
-            // Get the logged-in username
-            String username = SecurityContextHolder.getContext().getAuthentication().getName();
-            event.setUsername(username);
+    public ResponseEntity<OrderResponseDTO> checkout(@RequestBody CheckoutRequest request) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("Checkout initiated by user: {}", username);
 
-            if (event.getEmail() == null || event.getEmail().trim().isEmpty()) {
-                com.likhith.ecomproj.model.User dbUser = userRepo.findByUsername(username);
-                if (dbUser != null && dbUser.getEmail() != null) {
-                    event.setEmail(dbUser.getEmail());
-                }
-            }
-
-            // Save order to DB
-            OrderEntity order = new OrderEntity();
-            order.setUsername(username);
-            order.setEmail(event.getEmail());
-            order.setTotalAmount(event.getTotalAmount());
-            order.setPaymentId(event.getPaymentId());
-            order.setOrderId(event.getOrderId());
-            order.setStatus("PLACED");
-            order.setCreatedAt(new Date());
-            order.setOrderItems(objectMapper.writeValueAsString(event.getItems()));
-
-            orderRepo.save(order);
-            System.out.println("✅ Order saved to DB: " + order.getOrderId());
-
-            // Clear the user's cart from DB after successful order
-            cartItemRepo.deleteByUsername(username);
-            System.out.println("✅ Cart cleared from DB for user: " + username);
-
-            // Publish Kafka event (async: inventory update)
-            orderEventProducer.publishOrderPlacedEvent(event);
-
-            // ========== ASYNC EMAIL via Resend HTTP API ==========
-            // Render free tier blocks SMTP ports 25/465/587.
-            // Resend uses HTTPS (port 443) which is not blocked.
-            final String recipientEmail = event.getEmail();
-            final String orderUsername = event.getUsername();
-            final String orderId = event.getOrderId();
-            final String paymentId = event.getPaymentId();
-            final BigDecimal totalAmount = event.getTotalAmount();
-
-            new Thread(() -> {
-                try {
-                    if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
-                        String subject = "Order Confirmation - " + orderId;
-                        String html = "<h2>Order Confirmation</h2>"
-                                + "<p>Dear " + orderUsername + ",</p>"
-                                + "<p>Thank you for your order!</p>"
-                                + "<table style='border-collapse:collapse;width:100%;max-width:400px'>"
-                                + "<tr><td style='padding:8px;border:1px solid #ddd'><strong>Order ID</strong></td>"
-                                + "<td style='padding:8px;border:1px solid #ddd'>" + orderId + "</td></tr>"
-                                + "<tr><td style='padding:8px;border:1px solid #ddd'><strong>Payment ID</strong></td>"
-                                + "<td style='padding:8px;border:1px solid #ddd'>" + paymentId + "</td></tr>"
-                                + "<tr><td style='padding:8px;border:1px solid #ddd'><strong>Total Amount</strong></td>"
-                                + "<td style='padding:8px;border:1px solid #ddd'>Rs." + totalAmount + "</td></tr>"
-                                + "</table>"
-                                + "<p>Thank you for shopping with us!</p>";
-
-                        resendEmailService.sendEmail(recipientEmail.trim(), subject, html);
-                    } else {
-                        System.out.println("⚠️ No email address found for user: " + orderUsername);
-                    }
-                } catch (Exception emailEx) {
-                    System.err.println("❌ Email FAILED: " + emailEx.getMessage());
-                }
-            }, "email-sender-" + orderId).start();
-            // =====================================================
-
-            return new ResponseEntity<>(order, HttpStatus.CREATED);
-        } catch (JsonProcessingException e) {
-            return new ResponseEntity<>("Failed to process order: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        OrderEntity order = orderService.checkout(username, request);
+        return new ResponseEntity<>(orderService.toDTO(order), HttpStatus.CREATED);
     }
 
     /**
      * Get orders for the currently logged-in user.
      */
     @GetMapping("/my-orders")
-    public ResponseEntity<List<OrderEntity>> getMyOrders() {
+    public ResponseEntity<List<OrderResponseDTO>> getMyOrders() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return new ResponseEntity<>(orderRepo.findByUsername(username), HttpStatus.OK);
+        return new ResponseEntity<>(orderService.getOrdersDTOByUsername(username), HttpStatus.OK);
     }
 
     /**
      * Admin: Get all orders.
      */
     @GetMapping("/all")
-    public ResponseEntity<List<OrderEntity>> getAllOrders() {
-        return new ResponseEntity<>(orderRepo.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<OrderResponseDTO>> getAllOrders() {
+        return new ResponseEntity<>(orderService.getAllOrdersDTO(), HttpStatus.OK);
     }
 }

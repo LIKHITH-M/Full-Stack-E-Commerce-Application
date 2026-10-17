@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -14,10 +16,27 @@ import java.util.*;
 import java.util.function.Function;
 
 @Service
+@Slf4j
 public class JwtService {
 
-    @Value("${jwt.secret:ecom_proj_default_jwt_secret_key_must_be_at_least_256_bits_long_for_hmac_sha256_security}")
+    @Value("${jwt.secret:}")
     private String secretKey;
+
+    @PostConstruct
+    public void validateJwtSecret() {
+        if (secretKey == null || secretKey.trim().isEmpty()) {
+            throw new IllegalStateException("Security startup failure: 'jwt.secret' (JWT_SECRET) is required. Application fails safely when secret is missing.");
+        }
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secretKey);
+        } catch (Exception e) {
+            keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
+        }
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("Security startup failure: 'jwt.secret' must be at least 256 bits (32 bytes) long for HMAC-SHA256.");
+        }
+    }
 
     public String generateToken(String username, String role) {
         Map<String, Object> claims = new HashMap<>();
@@ -75,5 +94,10 @@ public class JwtService {
 
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    // Package-private setter for tests
+    void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
     }
 }

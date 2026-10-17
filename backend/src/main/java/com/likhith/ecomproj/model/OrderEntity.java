@@ -9,7 +9,11 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", indexes = {
+    @Index(name = "idx_order_username", columnList = "username"),
+    @Index(name = "idx_order_order_id", columnList = "orderId"),
+    @Index(name = "idx_order_payment_id", columnList = "paymentId")
+})
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -22,9 +26,16 @@ public class OrderEntity {
     private String username;
     private String email;
     private BigDecimal totalAmount;
+
+    @Column(unique = true)
     private String paymentId;
+
+    @Column(unique = true)
     private String orderId;
-    private String status; // PLACED, CONFIRMED, SHIPPED, DELIVERED
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OrderStatus status = OrderStatus.PENDING;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();

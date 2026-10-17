@@ -1,11 +1,13 @@
 package com.likhith.ecomproj.service;
 
 import com.likhith.ecomproj.model.OrderPlacedEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class EmailNotificationConsumer {
 
     @Autowired
@@ -13,11 +15,11 @@ public class EmailNotificationConsumer {
 
     @KafkaListener(topics = "order-events", groupId = "email-group", autoStartup = "${spring.kafka.listener.auto-startup:true}")
     public void handleOrderPlacedEvent(OrderPlacedEvent event) {
-        System.out.println("EmailNotificationConsumer received event for order: " + event.getOrderId() + " | Recipient: " + event.getEmail());
+        log.info("EmailNotificationConsumer received event for order: {} | Recipient: {}", event.getOrderId(), event.getEmail());
 
         try {
             if (event.getEmail() != null && !event.getEmail().trim().isEmpty()) {
-                String subject = "Kafka Notification: Order Confirmation - " + event.getOrderId();
+                String subject = "Order Confirmation - " + event.getOrderId();
                 StringBuilder html = new StringBuilder();
                 html.append("<h2>Order Confirmation</h2>");
                 html.append("<p>Dear ").append(event.getUsername()).append(",</p>");
@@ -26,11 +28,12 @@ public class EmailNotificationConsumer {
                 html.append("<p><strong>Total Amount:</strong> ₹").append(event.getTotalAmount()).append("</p>");
 
                 resendEmailService.sendEmail(event.getEmail().trim(), subject, html.toString());
+                log.info("Successfully sent order confirmation email for order: {}", event.getOrderId());
             } else {
-                System.out.println("No email address provided, skipping email notification.");
+                log.info("No email address provided for order {}, skipping email notification.", event.getOrderId());
             }
         } catch (Exception e) {
-            System.err.println("Failed to send Kafka email notification: " + e.getMessage());
+            log.error("Failed to send order email notification for order {}: {}", event.getOrderId(), e.getMessage());
         }
     }
 }

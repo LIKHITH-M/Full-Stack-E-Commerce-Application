@@ -100,4 +100,65 @@ class ProductServiceTest {
 
         verify(productRepo, times(1)).deleteById(1);
     }
+
+    @Test
+    void testDecrementStock_Success() {
+        when(productRepo.findById(1)).thenReturn(Optional.of(product1));
+        when(productRepo.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Product result = productService.decrementStockWithOptimisticLocking(1, 5);
+
+        assertNotNull(result);
+        assertEquals(45, result.getStockQuantity());
+        assertTrue(result.isAvailable());
+        verify(productRepo, times(1)).save(product1);
+    }
+
+    @Test
+    void testDecrementStock_BecomesUnavailableWhenZero() {
+        when(productRepo.findById(2)).thenReturn(Optional.of(product2));
+        when(productRepo.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Product result = productService.decrementStockWithOptimisticLocking(2L, 20);
+
+        assertNotNull(result);
+        assertEquals(0, result.getStockQuantity());
+        assertFalse(result.isAvailable());
+        verify(productRepo, times(1)).save(product2);
+    }
+
+    @Test
+    void testDecrementStock_InvalidQuantity_ThrowsException() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            productService.decrementStockWithOptimisticLocking(1, 0);
+        });
+
+        assertTrue(ex.getMessage().contains("greater than 0"));
+        verify(productRepo, never()).save(any());
+    }
+
+    @Test
+    void testDecrementStock_ProductNotFound_ThrowsException() {
+        when(productRepo.findById(999)).thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            productService.decrementStockWithOptimisticLocking(999, 1);
+        });
+
+        assertTrue(ex.getMessage().contains("Product not found with ID: 999"));
+        verify(productRepo, never()).save(any());
+    }
+
+    @Test
+    void testDecrementStock_InsufficientStock_ThrowsException() {
+        when(productRepo.findById(1)).thenReturn(Optional.of(product1));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> {
+            productService.decrementStockWithOptimisticLocking(1, 100);
+        });
+
+        assertTrue(ex.getMessage().contains("Insufficient stock"));
+        assertEquals(50, product1.getStockQuantity());
+        verify(productRepo, never()).save(any());
+    }
 }

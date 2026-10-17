@@ -1,5 +1,6 @@
 package com.likhith.ecomproj.controller;
 
+import com.likhith.ecomproj.dto.UserResponseDTO;
 import com.likhith.ecomproj.model.User;
 import com.likhith.ecomproj.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Admin User controller.
+ * Exposes UserResponseDTO to ensure password hashes and internal credentials
+ * are NEVER returned to API callers.
+ */
 @RestController
 @RequestMapping("/api/admin/users")
 public class AdminUserController {
@@ -17,15 +23,15 @@ public class AdminUserController {
     private UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+        return new ResponseEntity<>(userService.getAllUsersDTO(), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable int id) {
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable int id) {
         User user = userService.getUserById(id);
         if (user != null) {
-            return new ResponseEntity<>(user, HttpStatus.OK);
+            return new ResponseEntity<>(UserService.toDTO(user), HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }

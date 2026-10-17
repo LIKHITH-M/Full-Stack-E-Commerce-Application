@@ -17,6 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderPlacedEvent implements Serializable {
 
+    private String eventId;
     private String username;
     private String email;
     private String paymentId;
