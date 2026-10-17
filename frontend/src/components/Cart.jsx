@@ -6,7 +6,7 @@ import CheckoutPopup from "./CheckoutPopup";
 import { Button } from 'react-bootstrap';
 
 const Cart = () => {
-  const { cart, removeFromCart, clearCart } = useContext(AppContext);
+  const { cart, removeFromCart, clearCart, refreshData } = useContext(AppContext);
   const [cartItems, setCartItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [cartImage, setCartImage] = useState([]);
