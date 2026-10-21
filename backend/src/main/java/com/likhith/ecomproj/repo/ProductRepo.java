@@ -38,4 +38,9 @@ public interface ProductRepo extends JpaRepository<Product, Integer> {
     List<ProductSummaryDTO> findAllSummary();
 
     List<Product> findAllByIdIn(List<Integer> ids);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = "UPDATE product SET version = 0 WHERE version IS NULL", nativeQuery = true)
+    int initializeNullVersions();
 }

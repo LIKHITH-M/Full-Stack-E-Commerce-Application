@@ -11,14 +11,29 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
 
 @Service
+@Slf4j
 public class ProductService {
 
     @Autowired
     private ProductRepo repo;
+
+    @PostConstruct
+    public void init() {
+        try {
+            int count = repo.initializeNullVersions();
+            if (count > 0) {
+                log.info("Initialized {} legacy products with version = 0", count);
+            }
+        } catch (Exception e) {
+            log.warn("Version migration check skipped or completed: {}", e.getMessage());
+        }
+    }
 
     public List<Product> getAllProducts() {
         return repo.findAll();
@@ -88,6 +103,9 @@ public class ProductService {
         }
 
         if (existingProduct.getVersion() == null) {
+            try {
+                repo.initializeNullVersions();
+            } catch (Exception ignored) {}
             existingProduct.setVersion(0L);
         }
 
