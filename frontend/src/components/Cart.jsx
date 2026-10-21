@@ -103,11 +103,19 @@ const Cart = () => {
         return;
       }
 
+      const itemsPayload = cartItems.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      }));
+
       const orderResponse = await API.post(
-        `/payments/create-order?amount=${Math.round(totalPrice)}&currency=INR&receiptId=receipt_${Date.now()}`
+        `/payments/create-order?amount=${Math.round(totalPrice)}&currency=INR&receiptId=receipt_${Date.now()}`,
+        itemsPayload
       );
 
-      const orderData = JSON.parse(orderResponse.data.order);
+      const orderData = typeof orderResponse.data.order === "string" 
+        ? JSON.parse(orderResponse.data.order) 
+        : orderResponse.data.order;
       const razorpayKeyId = orderResponse.data.razorpayKeyId;
 
       const options = {
@@ -160,7 +168,8 @@ const Cart = () => {
       rzp.open();
     } catch (error) {
       console.error("Error creating Razorpay order:", error);
-      alert("Failed to initiate payment. Please try again.");
+      const serverMsg = error.response?.data?.error || error.response?.data?.message || error.message;
+      alert(`Failed to initiate payment: ${serverMsg}`);
     }
     setPaymentProcessing(false);
   };
