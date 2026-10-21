@@ -1,0 +1,44 @@
+# backend/.dockerignore
+# Excludes files from the Docker build context (what Docker can "see").
+# Smaller build context = faster docker build and less memory usage.
+
+# Maven build output - always rebuilt inside Docker, never copy from host
+target/
+
+# Java compiled classes and test reports
+*.class
+*.jar
+*.war
+surefire-reports/
+
+# Git history - irrelevant to Docker build
+.git/
+.gitignore
+
+# IDE files - irrelevant to Docker build
+.idea/
+*.iml
+*.ipr
+*.iws
+.settings/
+.project
+.classpath
+.factorypath
+
+# Maven wrapper (we use the full maven:3.9.6 image in stage 1, not the wrapper)
+.mvn/
+
+# Log files
+*.log
+logs/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Environment files (should never be baked into images)
+.env
+.env.*
+
+# Test-only resources that don't belong in the image
+src/test/

@@ -107,7 +107,6 @@ class ProductStockOptimisticLockingTest {
     void testOptimisticLockingConflictOnStaleEntity() {
         // 1. Thread/Session 1 reads the product at current version
         Product staleProduct = productRepo.findById(testProductId).orElseThrow();
-        Long currentVersion = staleProduct.getVersion();
 
         // 2. Thread/Session 2 updates the product (e.g. through the service), incrementing the version in DB
         productService.decrementStockWithOptimisticLocking(testProductId, 2);

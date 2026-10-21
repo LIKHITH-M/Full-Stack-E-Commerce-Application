@@ -1,0 +1,46 @@
+# frontend/.dockerignore
+# Excludes files and directories from the Docker build context.
+# Prevents node_modules (500+ MB!) from being uploaded to Docker daemon.
+
+# The most important exclusion - never copy node_modules into the image
+# Stage 1 runs npm ci inside the container to install fresh.
+node_modules/
+
+# Vite build output - rebuilt inside Docker from source
+dist/
+
+# Git history
+.git/
+.gitignore
+
+# Editor files
+.vscode/
+.idea/
+*.iml
+
+# Test artifacts
+e2e/
+playwright-report/
+test-results/
+playwright.config.js
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Local environment files (NEVER bake secrets into images)
+.env
+.env.*
+.env.local
+.env.development.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel deployment config (irrelevant for Docker)
+vercel.json
+
+# README (not needed at runtime)
+README.md

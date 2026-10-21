@@ -3,7 +3,6 @@ package com.likhith.ecomproj.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.likhith.ecomproj.model.OrderPlacedEvent;
 import com.likhith.ecomproj.model.OutboxEvent;
-import com.likhith.ecomproj.model.ProcessedEvent;
 import com.likhith.ecomproj.model.Product;
 import com.likhith.ecomproj.repo.OutboxEventRepo;
 import com.likhith.ecomproj.repo.ProcessedEventRepo;

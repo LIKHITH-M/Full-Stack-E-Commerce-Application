@@ -122,6 +122,15 @@ Thumbs.db
 *.sqlite
 *.db
 
+# ----------------------------------------------------------------------
+# Docker / Containerization
+# ----------------------------------------------------------------------
+# Aiven CA certificate - may contain real credentials for cloud Kafka
+aiven-ca.pem
+# Docker named volume data (if ever bind-mounted locally)
+mysql_data/
+redis_data/
+
 # Playwright Test Outputs
 playwright-report/
 test-results/
@@ -138,3 +147,4 @@ RUN_STEPS.md
 DEPLOYMENT_GUIDE.md
 REDIS_INTEGRATION_GUIDE.md
 task.md
+DOCKER_IMPLEMENTATION_PLAN.md

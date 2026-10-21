@@ -8,7 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import java.io.IOException;
 import java.util.List;
 
@@ -22,18 +24,32 @@ public class ProductService {
         return repo.findAll();
     }
 
+    
+    // NOT cached.
+    // Reason: Page<T> requires extra serialization config and is used by admin workflows,
+    // not the high-traffic browse path. The non-paginated overload above is the hot path.
     public Page<ProductSummaryDTO> getAllProductSummaries(Pageable pageable) {
-        return repo.findAllSummary(pageable);
+        return repo.findAllSummary(pageable); // Intentionally NOT cached
     }
 
+    // Cache behaviour:
+    // - First call: queries MySQL, stores at Redis key "products::all" (TTL: 10 min).
+    // - Subsequent calls within TTL: returns cached list - NO SQL executed.
+    // - After TTL or eviction: re-queries MySQL and re-populates cache.
+    @Cacheable(value = "products", key = "'all'")  
     public List<ProductSummaryDTO> getAllProductSummaries() {
         return repo.findAllSummary();
     }
 
+    // Redis key: "product::1", "product::42", etc.
+    // TTL: 30 minutes (configured in RedisConfig.java).
+    // null (product not found) is NOT cached (disableCachingNullValues in RedisConfig).
+    @Cacheable(value = "product", key = "#id")       
     public Product getProduct(int id) {
         return repo.findById(id).orElse(null);
     }
 
+    @CacheEvict(value = "products", key = "'all'") 
     public Product addProduct(Product product, MultipartFile imageFile) throws IOException {
         product.setImageName(imageFile.getOriginalFilename());
         product.setImageType(imageFile.getContentType());
@@ -44,6 +60,10 @@ public class ProductService {
     }
 
     @org.springframework.transaction.annotation.Transactional
+    @Caching(evict = {
+    @CacheEvict(value = "products", key = "'all'"),
+    @CacheEvict(value = "product", key = "#id")
+    })
     public Product updateProduct(int id, Product product, MultipartFile imageFile) throws IOException {
         Product existingProduct = repo.findById(id).orElse(null);
         if (existingProduct == null) {
@@ -74,6 +94,10 @@ public class ProductService {
         return repo.save(existingProduct);
     }
 
+    @Caching(evict = {
+    @CacheEvict(value = "products", key = "'all'"),
+    @CacheEvict(value = "product", key = "#id")
+    })
     public void deleteProduct(int id) {
         repo.deleteById(id);
     }
@@ -107,6 +131,7 @@ public class ProductService {
      * @throws org.springframework.orm.ObjectOptimisticLockingFailureException if a concurrent update occurs
      */
     @org.springframework.transaction.annotation.Transactional
+    @CacheEvict(value = "products", key = "'all'")
     public Product decrementStockWithOptimisticLocking(int productId, int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity to decrement must be greater than 0. Received: " + quantity);
@@ -132,6 +157,7 @@ public class ProductService {
      * Overloaded method accepting Long productId for callers using Long identifier representations.
      */
     @org.springframework.transaction.annotation.Transactional
+    @CacheEvict(value = "products", key = "'all'")
     public Product decrementStockWithOptimisticLocking(Long productId, int quantity) {
         if (productId == null) {
             throw new IllegalArgumentException("Product ID cannot be null");

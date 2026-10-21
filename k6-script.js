@@ -2,8 +2,8 @@ import http from 'k6/http';
 import { check } from 'k6';
 
 export const options = {
-    vus: 10,          // 10 concurrent virtual users
-    duration: '10s',  // Run test for 10 seconds
+    vus: 50,          // 50 concurrent virtual users (or override via CLI: k6 run --vus 100 k6-script.js)
+    duration: '20s',  // Run test for 20 seconds
 };
 
 export function setup() {
@@ -17,23 +17,44 @@ export function setup() {
     });
 
     // 2. Login to get JWT token
-    const res = http.post('http://localhost:8081/api/auth/login', JSON.stringify({ username, password }), {
+    let token = '';
+    const loginRes = http.post('http://localhost:8081/api/auth/login', JSON.stringify({ username, password }), {
         headers: { 'Content-Type': 'application/json' },
     });
 
-    if (res.status === 200) {
-        const body = JSON.parse(res.body);
-        return { token: body.token, email };
+    if (loginRes.status === 200) {
+        const body = JSON.parse(loginRes.body);
+        token = body.token;
+        console.log(`[k6 setup] Authentication successful for '${username}'`);
+    } else {
+        console.error(`[k6 setup] Login failed with HTTP ${loginRes.status}: ${loginRes.body}`);
     }
-    return { token: '', email };
+
+    // 3. Dynamically discover an active product ID
+    let productId = 1;
+    let price = 500;
+    const productsRes = http.get('http://localhost:8081/api/products');
+    if (productsRes.status === 200) {
+        const products = JSON.parse(productsRes.body);
+        if (products && products.length > 0) {
+            productId = products[0].id;
+            price = products[0].price || 500;
+            console.log(`[k6 setup] Dynamically selected active product ID: ${productId} ('${products[0].name}') with price: ${price}`);
+        } else {
+            console.warn('[k6 setup] Warning: No products found in backend! Using fallback ID: 1');
+        }
+    }
+
+    return { token, email, productId, price };
 }
 
 export default function (data) {
+    const randomId = Math.random().toString(36).substring(2, 9);
     const payload = JSON.stringify({
-        orderId: `K6-ORDER-${Math.random()}`,
-        totalAmount: 500,
+        paymentId: `PAY_MANUAL_K6_${Date.now()}_${randomId}`,
+        orderId: `K6-ORDER-${Date.now()}-${randomId}`,
         email: data.email,
-        items: [{ productId: 1, productName: 'Item', price: 500, quantity: 1 }]
+        items: [{ productId: data.productId, quantity: 1 }]
     });
 
     const res = http.post('http://localhost:8081/api/orders/checkout', payload, {
@@ -43,5 +64,8 @@ export default function (data) {
         },
     });
 
-    check(res, { 'status is 200 or 201': (r) => r.status === 200 || r.status === 201 });
+    const passed = check(res, { 'status is 200 or 201': (r) => r.status === 200 || r.status === 201 });
+    if (!passed && Math.random() < 0.05) {
+        console.error(`[k6 error sample] HTTP ${res.status}: ${res.body}`);
+    }
 }

@@ -1,6 +1,5 @@
 package com.likhith.ecomproj.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.likhith.ecomproj.dto.CheckoutRequest;
 import com.likhith.ecomproj.model.*;
 import com.likhith.ecomproj.repo.*;
@@ -37,9 +36,6 @@ public class OrderServiceIntegrationTest {
 
     @Autowired
     private CartItemRepo cartItemRepo;
-
-    @Autowired
-    private RazorPayService razorPayService;
 
     private Product testProduct;
 
