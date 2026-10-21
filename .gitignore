@@ -131,3 +131,10 @@ frontend/test-results/
 frontend/blob-report/
 
 
+# Personal Documentation & Study Notes
+PROJECT_DOCUMENTATION.md
+EMAIL_SETUP.md
+RUN_STEPS.md
+DEPLOYMENT_GUIDE.md
+REDIS_INTEGRATION_GUIDE.md
+task.md
