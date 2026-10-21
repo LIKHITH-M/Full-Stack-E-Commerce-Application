@@ -3,6 +3,8 @@
 ![Build Status](https://github.com/LIKHITH-M/Full-Stack-E-Commerce-Application/actions/workflows/ci.yml/badge.svg)
 ![Frontend](https://img.shields.io/badge/Frontend-Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
 ![Backend](https://img.shields.io/badge/Backend-Render-46E3B7?style=flat-square&logo=render&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Upstash_/_Local-DC382D?style=flat-square&logo=redis&logoColor=white)
 ![Database](https://img.shields.io/badge/Database-Neon_PostgreSQL-00E599?style=flat-square&logo=postgresql&logoColor=white)
 ![Kafka](https://img.shields.io/badge/Kafka-Aiven_Free_Tier-FF4F00?style=flat-square&logo=apachekafka&logoColor=white)
 ![Observability](https://img.shields.io/badge/Observability-Grafana_Cloud-F46800?style=flat-square&logo=grafana&logoColor=white)
@@ -11,7 +13,7 @@
 ![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-**A production-ready, cloud-deployed full-stack e-commerce platform** built with **Spring Boot 3 (Java 21)** on the backend and **React 18 (Vite)** on the frontend. It features JWT-based stateless authentication, **Razorpay** payment gateway integration, and an **event-driven architecture** powered by **Apache Kafka (Aiven Cloud)** for real-time order notifications and automated inventory management.
+**A production-ready, cloud-deployed full-stack e-commerce platform** built with **Spring Boot 3 (Java 21)** on the backend and **React 18 (Vite)** on the frontend. It features JWT-based stateless authentication, **Redis caching** for high-throughput product retrieval with graceful database degradation, **Razorpay** payment gateway integration, **full Docker containerization** with multi-stage builds and Nginx reverse proxying, and an **event-driven architecture** powered by **Apache Kafka (Aiven Cloud)** for real-time order notifications and automated inventory management.
 
 ---
 
@@ -19,12 +21,13 @@
 
 | Service | Infrastructure | Live URL / Endpoint | Status |
 |:---|:---|:---|:---:|
-| **Frontend Web App** | **Vercel** (Edge CDN) | [https://full-stack-e-commerce-application-orm5djw09-parzival2.vercel.app](https://full-stack-e-commerce-application-orm5djw09-parzival2.vercel.app) | 🟢 Live |
+| **Frontend Web App** | **Vercel** (Edge CDN) | [https://full-stack-e-commerce-application-three.vercel.app](https://full-stack-e-commerce-application-three.vercel.app) | 🟢 Live |
 | **Backend REST API** | **Render** (Docker / Java 21) | `https://ecom-backend-nk37.onrender.com` | 🟢 Live |
+| **Redis Cache** | **Upstash Redis** (TLS / Serverless) | `handy-alien-xxxx.upstash.io:6379` | 🟢 Connected |
 | **Actuator Health** | **Spring Boot Actuator** | `https://ecom-backend-nk37.onrender.com/actuator/health` | 🟢 Live |
 | **Prometheus Metrics** | **Micrometer / Grafana** | `https://ecom-backend-nk37.onrender.com/actuator/prometheus` | 🟢 Live |
-| **Database** | **Neon PostgreSQL** | `ep-floral-bonus-axg58q7m.c-4.us-east-2.aws.neon.tech` | 🟢 Connected |
-| **Kafka Broker** | **Aiven Kafka** (SASL_SSL) | `ecom-kafka-xxxx.aivencloud.com:28045` | 🟢 Connected |
+| **Database** | **Neon PostgreSQL** | `ep-xxxx.c-4.us-east-2.aws.neon.tech` (masked) | 🟢 Connected |
+| **Kafka Broker** | **Aiven Kafka** (SASL_SSL) | `ecom-kafka-xxxx.aivencloud.com:28045` (masked) | 🟢 Connected |
 | **Deployment Guide** | **Markdown Doc** | [DEPLOYMENT_GUIDE.md](file:///c:/Desktop/Projects/Full%20Stack%20E-commerce%20Application/DEPLOYMENT_GUIDE.md) | 📖 Documented |
 
 ---
@@ -62,13 +65,19 @@
 │   │  JwtService  │  │CategoryService│ │              │  │                  │    │
 │   └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────────┘    │
 │          │                 │                 │                 │                  │
-│   ┌──────┴─────────────────┴─────────────────┴─────────┐       │                 │
-│   │                Spring Data JPA                      │       │                 │
-│   │          (UserRepo, ProductRepo, OrderRepo,         │       │                 │
-│   │           CategoryRepo)                             │       │                 │
-│   └──────────────────────┬──────────────────────────────┘       │                 │
-│                          │                                      │                 │
-└──────────────────────────┼──────────────────────────────────────┼─────────────────┘
+│          │          ┌──────▼─────────────────▼─────────┐       │                  │
+│          │          │        Redis Cache Layer         │       │                  │
+│          │          │   (Upstash / Local Redis 7.2)    │       │                  │
+│          │          │   TTL: 10m | Graceful Fallback   │       │                  │
+│          │          └──────────────┬───────────────────┘       │                  │
+│          │                         │ Cache Miss / Evict        │                  │
+│   ┌──────┴─────────────────────────┴────────────────────┐       │                  │
+│   │                Spring Data JPA                      │       │                  │
+│   │          (UserRepo, ProductRepo, OrderRepo,         │       │                  │
+│   │           CategoryRepo)                             │       │                  │
+│   └──────────────────────┬──────────────────────────────┘       │                  │
+│                          │                                      │                  │
+└──────────────────────────┼──────────────────────────────────────┼──────────────────┘
                            │                                      │
               ┌────────────▼────────────┐            ┌────────────▼────────────────┐
               │     MySQL / PostgreSQL  │            │     Apache Kafka (KRaft)    │
@@ -88,6 +97,34 @@
 
 ---
 
+## 🐳 Quick Start with Docker (Run Whole Stack Locally)
+
+Run the entire application stack (all 7 services) on your machine with one command:
+
+```bash
+# 1. Clone repository
+git clone https://github.com/LIKHITH-M/Full-Stack-E-Commerce-Application.git
+cd Full-Stack-E-Commerce-Application
+
+# 2. Configure secrets (auto-read by docker compose)
+cp .env.example .env
+
+# 3. Build and launch all 7 containers
+docker compose up -d --build
+```
+
+| Service | Local URL / Access | Description |
+|:---|:---|:---|
+| **Frontend UI** | [http://localhost](http://localhost) | React 18 SPA served by Nginx reverse proxy |
+| **Backend API** | [http://localhost:8081](http://localhost:8081) | Spring Boot 3 REST API + Actuator Health |
+| **Prometheus** | [http://localhost:9090](http://localhost:9090) | Scrapes `/actuator/prometheus` metrics |
+| **Grafana** | [http://localhost:3000](http://localhost:3000) | Observability dashboards (`admin` / `admin`) |
+| **MySQL 8.0** | `ecom-mysql` (port 3306) | Primary relational database |
+| **Redis 7.2** | `ecom-redis` (port 6379) | In-memory distributed cache |
+| **Kafka 7.6** | `ecom-kafka` (port 9092) | KRaft event broker for async orders |
+
+---
+
 ## ⚙️ Tech Stack
 
 ### Backend
@@ -97,6 +134,7 @@
 | **Java 21** | Core language with modern features (records, pattern matching, virtual threads) |
 | **Spring Boot 3.3** | Application framework with auto-configuration and embedded Tomcat |
 | **Spring Security** | Authentication & authorization with JWT-based stateless sessions |
+| **Spring Data Redis** | Distributed caching via Lettuce client with Jackson JSON serialization |
 | **Spring Data JPA** | ORM layer with Hibernate for database operations (`users`, `product`, `categories`, `orders`, `cart_items`) |
 | **Spring Kafka** | Kafka producer/consumer integration for event-driven messaging |
 | **Resend HTTP API** | HTTPS-based transactional email delivery (bypasses Render outbound SMTP port blocking) |
@@ -104,7 +142,22 @@
 | **Razorpay Java SDK** | Server-side payment order creation and verification |
 | **Lombok** | Boilerplate reduction — `@Data`, `@NoArgsConstructor`, `@AllArgsConstructor` |
 | **PostgreSQL Driver** | JDBC driver for Neon Cloud PostgreSQL database connectivity |
+| **MySQL Driver** | JDBC driver for local Docker MySQL database connectivity |
 | **Maven** | Build tool and dependency management |
+
+### DevOps & Infrastructure
+
+| Technology | Purpose |
+|:---|:---|
+| **Docker & Docker Compose** | Multi-container orchestration for 7 micro-services with healthchecks and persistent volumes |
+| **Multi-Stage Dockerfiles** | Layer-cached Maven builds and Alpine runtime images (~200MB savings) |
+| **Nginx Reverse Proxy** | Static frontend delivery and `/api` reverse proxying via Docker DNS |
+| **Upstash Redis** | Serverless cloud Redis with TLS encryption and automated scaling |
+| **Render** | Containerized backend hosting with health checks and rolling deploys |
+| **Vercel** | Global edge CDN frontend hosting |
+| **Aiven Cloud** | Managed Kafka KRaft cluster for event streaming |
+| **Neon Tech** | Serverless PostgreSQL cloud database |
+| **Prometheus & Grafana** | Time-series metrics collection and dashboard monitoring |
 
 ### Frontend
 

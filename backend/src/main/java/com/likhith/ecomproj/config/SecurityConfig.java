@@ -71,7 +71,7 @@ public class SecurityConfig {
             origins = List.of("http://localhost:5173", "http://127.0.0.1:5173");
         }
 
-        configuration.setAllowedOrigins(origins);
+        configuration.setAllowedOriginPatterns(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Correlation-ID", "X-Requested-With"));
         configuration.setExposedHeaders(List.of("X-Correlation-ID"));
